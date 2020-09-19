@@ -6,6 +6,26 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <Button
+        android:id="@+id/button"
+        android:layout_width="165dp"
+        android:layout_height="92dp"
+        android:layout_marginTop="84dp"
+        android:layout_marginEnd="216dp"
+        android:text="Button"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/button2"
+        android:layout_width="165dp"
+        android:layout_height="92dp"
+        android:layout_marginTop="84dp"
+        android:layout_marginEnd="32dp"
+        android:text="Button"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <TextView
         android:id="@+id/main_check"
         app:layout_constraintTop_toTopOf="parent"
@@ -13,4 +33,24 @@
         android:text="@string/checking_setup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
+
+    <SurfaceView
+        android:id="@+id/surfaceView2"
+        android:layout_width="323dp"
+        android:layout_height="298dp"
+        android:layout_marginTop="416dp"
+        android:layout_marginEnd="44dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="259dp"
+        android:layout_height="123dp"
+        android:layout_marginTop="228dp"
+        android:layout_marginEnd="76dp"
+        android:text="TextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

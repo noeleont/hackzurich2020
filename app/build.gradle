@@ -171,4 +171,6 @@ dependencies {
 
     // Wireless Kit: https://developer.huawei.com/consumer/en/hms/huawei-wirelesskit/
     implementation 'com.huawei.hms:wireless:5.0.1.305'
+
+    implementation 'io.reactivex.rxjava3:rxkotlin:3.0.0'
 }
