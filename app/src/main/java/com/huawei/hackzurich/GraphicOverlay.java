@@ -21,7 +21,10 @@ package com.huawei.hackzurich;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Point;
+import android.graphics.PointF;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
 
 import com.huawei.hms.mlsdk.common.LensEngine;
@@ -47,7 +50,7 @@ import java.util.Set;
  * from the preview's coordinate system to the view coordinate system.</li>
  * </ol>
  */
-public class GraphicOverlay extends View {
+public class GraphicOverlay extends View implements View.OnClickListener, View.OnTouchListener {
     private final Object mLock = new Object();
 
     private int mPreviewWidth;
@@ -61,6 +64,23 @@ public class GraphicOverlay extends View {
     private int mFacing = LensEngine.BACK_LENS;
 
     private Set<Graphic> mGraphics = new HashSet<>();
+
+    public Point lastClick;
+
+    @Override
+    public void onClick(View v) {
+        System.out.println("asdsad");
+    }
+
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+            this.lastClick = new Point((int) (event.getX() / mHeightScaleFactor), (int) (event.getY() / mWidthScaleFactor));
+        }
+        return false;
+    }
+
 
     /**
      * Base class for a custom graphics object to be rendered within the graphic overlay. Subclass
@@ -130,6 +150,8 @@ public class GraphicOverlay extends View {
 
     public GraphicOverlay(Context context, AttributeSet attrs) {
         super(context, attrs);
+        this.setOnClickListener(this);
+        this.setOnTouchListener(this);
     }
 
     /**

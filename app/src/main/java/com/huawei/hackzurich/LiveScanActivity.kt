@@ -24,12 +24,11 @@ import com.huawei.hms.mlsdk.common.MLAnalyzer.MLTransactor
 import com.huawei.hms.mlsdk.objects.MLObject
 import com.huawei.hms.mlsdk.objects.MLObjectAnalyzer
 import com.huawei.hms.mlsdk.objects.MLObjectAnalyzerSetting
+import com.huawei.hms.mlsdk.text.MLRemoteTextSetting
+import com.huawei.hms.mlsdk.text.MLText
+import com.huawei.hms.mlsdk.text.MLTextAnalyzer
 import java.io.IOException
 import java.util.*
-import com.huawei.hackzurich.R
-import com.huawei.hackzurich.GraphicOverlay
-import com.huawei.hackzurich.LensEnginePreview
-import com.huawei.hackzurich.MLObjectGraphic
 
 public class LiveScanActivity : AppCompatActivity(), View.OnClickListener {
 
@@ -37,7 +36,7 @@ public class LiveScanActivity : AppCompatActivity(), View.OnClickListener {
 
     private val CAMERA_PERMISSION_CODE = 0
 
-    private var analyzer: MLObjectAnalyzer? = null
+    private var analyzer: MLTextAnalyzer? = null
 
     private var mLensEngine: LensEngine? = null
 
@@ -222,25 +221,33 @@ public class LiveScanActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun createObjectAnalyzer() {
-        // Create an object analyzer
-        // Use MLObjectAnalyzerSetting.TYPE_VIDEO for video stream detection.
-        // Use MLObjectAnalyzerSetting.TYPE_PICTURE for static image detection.
-        val setting =
-            MLObjectAnalyzerSetting.Factory().setAnalyzerType(MLObjectAnalyzerSetting.TYPE_VIDEO)
-                .allowMultiResults()
-                .allowClassification()
-                .create()
-        analyzer = MLAnalyzerFactory.getInstance().getLocalObjectAnalyzer(setting)
-        analyzer?.setTransactor(object : MLTransactor<MLObject> {
+/*
+        // Create a language set.
+        val languageList = listOf<String>("de", "en", "fr")
+        // Set parameters.
+        val setting: MLRemoteTextSetting = MLRemoteTextSetting.Factory() // Set the on-cloud text detection mode.
+            // MLRemoteTextSetting.OCR_COMPACT_SCENE: dense text recognition
+            // MLRemoteTextSetting.OCR_LOOSE_SCENE: sparse text recognition
+            .setTextDensityScene(MLRemoteTextSetting.OCR_LOOSE_SCENE) // Specify the languages that can be recognized, which should comply with ISO 639-1.
+            .setLanguageList(languageList) // Set the format of the returned text border box.
+            // MLRemoteTextSetting.NGON: Return the coordinates of the four corner points of the quadrilateral.
+            // MLRemoteTextSetting.ARC: Return the corner points of a polygon border in an arc. The coordinates of up to 72 corner points can be returned.
+            .setBorderType(MLRemoteTextSetting.ARC)
+            .create()
+
+        analyzer = MLAnalyzerFactory.getInstance().getRemoteTextAnalyzer(setting)
+*/
+        analyzer = MLTextAnalyzer.Factory(applicationContext).create()
+        analyzer?.setTransactor(object : MLTransactor<MLText.Block?> {
             override fun destroy() {}
-            override fun transactResult(result: MLAnalyzer.Result<MLObject>) {
+            override fun transactResult(result: MLAnalyzer.Result<MLText.Block?>) {
                 if (!mlsNeedToDetect) {
                     return
                 }
                 mOverlay?.clear()
                 val objectSparseArray = result.analyseList
                 for (i in 0 until objectSparseArray.size()) {
-                    val graphic = MLObjectGraphic(
+                    val graphic = MLTextGraphic(
                         mOverlay,
                         objectSparseArray.valueAt(i)
                     )
@@ -248,12 +255,12 @@ public class LiveScanActivity : AppCompatActivity(), View.OnClickListener {
                 }
                 // When you need to implement a scene that stops after recognizing specific content
                 // and continues to recognize after finishing processing, refer to this code
-                for (i in 0 until objectSparseArray.size()) {
+                /*for (i in 0 until objectSparseArray.size()) {
                     if (objectSparseArray.valueAt(i).typeIdentity == MLObject.TYPE_FOOD) {
                         mlsNeedToDetect = true
                         mHandler.sendEmptyMessage(STOP_PREVIEW)
                     }
-                }
+                }*/
             }
         })
     }
@@ -266,6 +273,7 @@ public class LiveScanActivity : AppCompatActivity(), View.OnClickListener {
             .applyFps(25.0f)
             .enableAutomaticFocus(true)
             .create()
+
     }
 
     private fun startLensEngine() {

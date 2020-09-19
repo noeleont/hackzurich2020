@@ -24,34 +24,42 @@ import android.graphics.RectF;
 import android.view.View;
 
 import com.huawei.hms.mlsdk.objects.MLObject;
+import com.huawei.hms.mlsdk.text.MLText;
 
 /**
  * Draw the detected object information and overlay it on the preview frame.
  */
-public class MLObjectGraphic extends GraphicOverlay.Graphic  {
+public class MLTextGraphic extends GraphicOverlay.Graphic {
     private static final float TEXT_SIZE = 54.0f;
 
     private static final float STROKE_WIDTH = 4.0f;
 
-    private final MLObject object;
+    private final MLText.Block object;
 
     private final Paint boxPaint;
 
     private final Paint textPaint;
 
-    MLObjectGraphic(GraphicOverlay overlay, MLObject object) {
+    MLTextGraphic(GraphicOverlay overlay, MLText.Block object) {
         super(overlay);
 
         this.object = object;
 
         this.boxPaint = new Paint();
-        this.boxPaint.setColor(Color.WHITE);
+        System.out.println(this.object.getBorder());
+        if (overlay.lastClick != null && this.object.getBorder().contains(overlay.lastClick.x, overlay.lastClick.y)) {
+            this.boxPaint.setColor(Color.GREEN);
+        } else {
+            this.boxPaint.setColor(Color.WHITE);
+        }
         this.boxPaint.setStyle(Style.STROKE);
-        this.boxPaint.setStrokeWidth(MLObjectGraphic.STROKE_WIDTH);
+        this.boxPaint.setStrokeWidth(MLTextGraphic.STROKE_WIDTH);
 
         this.textPaint = new Paint();
         this.textPaint.setColor(Color.WHITE);
-        this.textPaint.setTextSize(MLObjectGraphic.TEXT_SIZE);
+        this.textPaint.setTextSize(MLTextGraphic.TEXT_SIZE);
+
+
     }
 
     @Override
@@ -64,32 +72,13 @@ public class MLObjectGraphic extends GraphicOverlay.Graphic  {
         rect.bottom = this.translateY(rect.bottom);
         canvas.drawRect(rect, this.boxPaint);
 
+
         // draw other object info.
-        canvas.drawText(MLObjectGraphic.getCategoryName(this.object.getTypeIdentity()), rect.left, rect.bottom, this.textPaint);
-        canvas.drawText("trackingId: " + this.object.getTracingIdentity(), rect.left, rect.top, this.textPaint);
-        if (this.object.getTypePossibility() != null) {
-            canvas.drawText("confidence: " + this.object.getTypePossibility(), rect.right, rect.bottom, this.textPaint);
-        }
+        //canvas.drawText(MLTextGraphic.getCategoryName(this.object.getTypeIdentity()), rect.left, rect.bottom, this.textPaint);
+        //canvas.drawText("trackingId: " + this.object.getTracingIdentity(), rect.left, rect.top, this.textPaint);
+        //if (this.object.getTypePossibility() != null) {
+        //    canvas.drawText("confidence: " + this.object.getTypePossibility(), rect.right, rect.bottom, this.textPaint);
+        //}
     }
 
-    private static String getCategoryName(int category) {
-        switch (category) {
-            case MLObject.TYPE_OTHER:
-                return "Unknown";
-            case MLObject.TYPE_FURNITURE:
-                return "Home good";
-            case MLObject.TYPE_GOODS:
-                return "Fashion good";
-            case MLObject.TYPE_PLACE:
-                return "Place";
-            case MLObject.TYPE_PLANT:
-                return "Plant";
-            case MLObject.TYPE_FOOD:
-                return "Food";
-            case MLObject.TYPE_FACE:
-                return "Face";
-            default:
-        }
-        return "";
-    }
 }
