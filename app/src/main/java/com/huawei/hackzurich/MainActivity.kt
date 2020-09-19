@@ -1,9 +1,11 @@
 package com.huawei.hackzurich
 
+import android.content.Intent
 import android.graphics.Point
 import android.os.Bundle
 import android.util.SparseArray
 import android.view.SurfaceView
+import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.util.valueIterator
@@ -23,7 +25,7 @@ import java.io.IOException
 import java.lang.Double.parseDouble
 import java.lang.NumberFormatException
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), View.OnClickListener {
 
     // TODO: Make analyzer generic
     private lateinit var textAnalyzer: MLTextAnalyzer
@@ -120,34 +122,34 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onClick(v: View?) {
+        when (v?.id) {
+            R.id.btn_scan -> {
+                this.startActivity(Intent(this, LiveScanActivity::class.java))
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         setupCheck()
+        btn_scan.setOnClickListener(this)
 
         textView = findViewById<TextView>(R.id.textView)
-
-        val setting =
-            MLDocumentSkewCorrectionAnalyzerSetting.Factory().create()
-        val analyzer =
-            MLDocumentSkewCorrectionAnalyzerFactory.getInstance()
-                .getDocumentSkewCorrectionAnalyzer(setting)
-
-        analyzer.setTransactor(SkewDetectorProcessor())
 
         button.setOnClickListener {
             button.text = "Hello"
             setupAnalyzer()
             setupLens()
-            val mSurfaceView: SurfaceView = findViewById(R.id.surfaceView2)
+            /*val mSurfaceView: SurfaceView = findViewById(R.id.surfaceView2)
             try {
                 lensEngine.run(mSurfaceView.holder)
             } catch (e: IOException) {
                 //println(e)
                 button.text = "Been here"
                 // Exception handling logic.
-            }
+            }*/
         }
 
         button2.setOnClickListener {
@@ -160,8 +162,8 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             lensEngine?.release()
-            val mSurfaceView: SurfaceView = findViewById(R.id.surfaceView2)
-            var canvas = mSurfaceView.holder.lockCanvas()
+            //val mSurfaceView: SurfaceView = findViewById(R.id.surfaceView2)
+            //var canvas = mSurfaceView.holder.lockCanvas()
         }
 
 
@@ -203,40 +205,5 @@ class OcrDetectorProcessor : MLTransactor<MLText.Block?> {
 
     fun callback(op: (SparseArray<MLText.Block?>) -> Unit) {
         this.op = { res: SparseArray<MLText.Block?> -> op(res) }
-    }
-}
-
-class SkewDetectorProcessor : MLTransactor<MLDocumentSkewDetectResult?> {
-    override fun transactResult(results: MLAnalyzer.Result<MLDocumentSkewDetectResult?>) {
-        val items = results.analyseList
-
-        if (items  != null && items.get(0)?.resultCode == MLDocumentSkewCorrectionConstant.SUCCESS) {
-// Detection success.
-            val detectResult: MLDocumentSkewDetectResult = items.get(0)!!
-            val leftTop: Point = detectResult.leftTopPosition
-            val rightTop: Point = detectResult.rightTopPosition
-            val leftBottom: Point = detectResult.leftBottomPosition
-            val rightBottom: Point = detectResult.rightBottomPosition
-            val coordinates: MutableList<Point> = ArrayList()
-            coordinates.add(leftTop)
-            coordinates.add(rightTop)
-            coordinates.add(rightBottom)
-            coordinates.add(leftBottom)
-            val coordinateData =
-                MLDocumentSkewCorrectionCoordinateInput(coordinates as List<Point>?)
-            println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-            println()
-
-        } else {
-// Detection failure.
-        }
-
-        //println(items.get(0)?.stringValue)
-        // Determine detection result processing as required. Note that only the detection results are processed.
-        // Other detection-related APIs provided by ML Kit cannot be called.
-    }
-
-    override fun destroy() {
-        // Callback method used to release resources when the detection ends.
     }
 }

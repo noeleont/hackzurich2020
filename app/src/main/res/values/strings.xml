@@ -3,4 +3,8 @@
     <string name="checking_setup">Checking setup ...</string>
     <string name="checking_setup_result_ok">All good. Start hacking!</string>
     <string name="checking_setup_result_fail">Issue found: %1$s</string>
+    <string name="toast">Grant the permission to experience the function.</string>
+    <string name="Information_permission">Obtaining related permissions: Camera permissions failed. Some functions cannot be used properly. You need to manually grant permissions on the settings page. </string>
+    <string name="go_authorization">Go Authorization</string>
+    <string name="title_activity_liveness_detection">LivenessDetectionActivity</string>
 </resources>
