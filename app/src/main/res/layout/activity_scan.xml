@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     tools:context=".object.LiveObjectAnalyseActivity">
 
+
     <com.huawei.hackzurich.LensEnginePreview
         android:id="@+id/object_preview"
         android:layout_width="match_parent"
@@ -14,26 +15,42 @@
             android:id="@+id/object_overlay"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
+
     </com.huawei.hackzurich.LensEnginePreview>
 
     <TextView
-        android:id="@+id/textViewTips"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="20dp"
-        android:autoLink="email"
-        android:gravity="center"
-        android:text="When food is detected, detection stops, click restart to re-detect." />
+        android:id="@+id/total_view"
+        android:layout_width="187dp"
+        android:layout_height="175dp"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="50dp"
+        android:layout_marginTop="50dp"
+        android:background="@color/hiad_15_percent_white"
+        android:backgroundTint="#FFFFFF"
+        android:text="Total: "
+        android:textAlignment="center"
+        android:textColor="#009688"
+        android:textSize="36sp" />
 
     <Button
         android:id="@+id/detect_start"
         android:layout_width="80dp"
-        android:layout_height="30dp"
+        android:layout_height="80dp"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
+        android:layout_marginLeft="50dp"
         android:layout_marginBottom="50dp"
-        android:text="restart"
-      >
-  </Button>
+        android:background="@drawable/hwid_auth_button_background"
+        android:text="ok"></Button>
+
+    <Button
+        android:id="@+id/redo"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginLeft="50dp"
+        android:layout_marginBottom="140dp"
+        android:alpha="0"
+        android:background="@drawable/hwid_auth_button_background"
+        android:text="Redo"
+        android:textAlignment="center"></Button>
 </RelativeLayout>

@@ -37,7 +37,7 @@ public class LensEnginePreview extends ViewGroup {
 
     private Context mContext;
 
-    private SurfaceView mSurfaceView;
+    public SurfaceView mSurfaceView;
 
     private boolean mStartRequested;
 
@@ -92,6 +92,7 @@ public class LensEnginePreview extends ViewGroup {
     private void startIfReady() throws IOException {
         if (this.mStartRequested && this.mSurfaceAvailable) {
             this.mLensEngine.run(this.mSurfaceView.getHolder());
+
             if (this.mOverlay != null) {
                 Size size = this.mLensEngine.getDisplayDimension();
                 int min = Math.min(size.getWidth(), size.getHeight());

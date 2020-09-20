@@ -1,14 +1,15 @@
 package com.huawei.hackzurich
 
 import android.Manifest
+import android.content.ContentValues
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.net.Uri
-import android.os.Build
-import android.os.Bundle
-import android.os.Handler
-import android.os.Message
+import android.os.*
+import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
 import android.view.View
@@ -17,17 +18,20 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import com.huawei.hms.mlsdk.MLAnalyzerFactory
+import androidx.core.util.valueIterator
+import androidx.core.view.drawToBitmap
 import com.huawei.hms.mlsdk.common.LensEngine
+import com.huawei.hms.mlsdk.common.LensEngine.PhotographListener
 import com.huawei.hms.mlsdk.common.MLAnalyzer
 import com.huawei.hms.mlsdk.common.MLAnalyzer.MLTransactor
-import com.huawei.hms.mlsdk.objects.MLObject
-import com.huawei.hms.mlsdk.objects.MLObjectAnalyzer
-import com.huawei.hms.mlsdk.objects.MLObjectAnalyzerSetting
-import com.huawei.hms.mlsdk.text.MLRemoteTextSetting
 import com.huawei.hms.mlsdk.text.MLText
 import com.huawei.hms.mlsdk.text.MLTextAnalyzer
+import kotlinx.android.synthetic.main.activity_scan.*
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
+import java.io.OutputStream
+import java.lang.Double.parseDouble
 import java.util.*
 
 public class LiveScanActivity : AppCompatActivity(), View.OnClickListener {
@@ -54,6 +58,11 @@ public class LiveScanActivity : AppCompatActivity(), View.OnClickListener {
 
     private val START_PREVIEW = 2
 
+    private val SAVE_IMAGE = 3
+
+    private var lastPicture: Bitmap? = null
+    private var sum = 0.0
+
     private var isPermissionRequested = false
 
     private val ALL_PERMISSION = arrayOf(
@@ -69,9 +78,13 @@ public class LiveScanActivity : AppCompatActivity(), View.OnClickListener {
         mPreview = findViewById(R.id.object_preview)
         mOverlay = findViewById(R.id.object_overlay)
         createObjectAnalyzer()
-        val start =
-            findViewById<Button>(R.id.detect_start)
-        start.setOnClickListener(this)
+
+        val redo:Button = findViewById(R.id.redo)
+        redo.setOnClickListener(this)
+
+        val detect_start:Button = findViewById(R.id.detect_start)
+        detect_start.setOnClickListener(this)
+
         // Checking Camera Permissions
         if (ActivityCompat.checkSelfPermission(
                 this,
@@ -168,6 +181,49 @@ public class LiveScanActivity : AppCompatActivity(), View.OnClickListener {
         super.onSaveInstanceState(savedInstanceState)
     }
 
+    private fun saveToGallery(context: Context, byteArray: ByteArray, albumName: String) {
+        val filename = "${System.currentTimeMillis()}.png"
+        val write: (OutputStream) -> Unit = {
+            it.write(byteArray)
+            //bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val contentValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+                put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DCIM}/$albumName")
+            }
+            val dbHelper = DataBaseHelper(context)
+
+            context.contentResolver.let {
+                it.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)?.let { uri ->
+                    it.openOutputStream(uri)?.let(write)
+                }
+            }
+            // Gets the data repository in write mode
+            val db = dbHelper.writableDatabase
+
+// Create a new map of values, where column names are the keys
+            val values = ContentValues().apply {
+                put(TableInfo.IMAGE, "${Environment.DIRECTORY_DCIM}/$albumName/$filename")
+                put(TableInfo.TOTAL, sum)
+            }
+            Toast.makeText(this, "Saved", Toast.LENGTH_SHORT).show()
+
+// Insert the new row, returning the primary key value of the new row
+            val newRowId = db?.insert(TableInfo.DB_NAME, null, values)
+        } else {
+            val imagesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).toString() + File.separator + albumName
+            val file = File(imagesDir)
+            if (!file.exists()) {
+                file.mkdir()
+            }
+            val image = File(imagesDir, filename)
+            write(FileOutputStream(image))
+        }
+    }
+
     // When you need to implement a scene that stops after recognizing specific content
     // and continues to recognize after finishing processing, refer to this code
     private val mHandler: Handler = object : Handler() {
@@ -184,6 +240,16 @@ public class LiveScanActivity : AppCompatActivity(), View.OnClickListener {
                     Log.d("object", "stop to preview")
                     stopPreview()
                 }
+                SAVE_IMAGE -> {
+                    mlsNeedToDetect = true
+                    Toast.makeText(applicationContext, "Saved", Toast.LENGTH_SHORT).show()
+                    startPreview()
+                    //mLensEngine?.photograph(null, PhotographListener {
+                    //    saveToGallery(applicationContext, it, "smokinglevy")
+                        // This method is called when the photographing is complete.
+                        // The data parameter and the corresponding image data can be obtained here for further processing.
+                    //})
+                }
                 else -> {
                 }
             }
@@ -193,7 +259,7 @@ public class LiveScanActivity : AppCompatActivity(), View.OnClickListener {
     private fun stopPreview() {
         mlsNeedToDetect = false
         if (mLensEngine != null) {
-            mLensEngine!!.release()
+            //mLensEngine!!.release()
         }
         if (analyzer != null) {
             try {
@@ -209,7 +275,13 @@ public class LiveScanActivity : AppCompatActivity(), View.OnClickListener {
         if (isStarted) {
             return
         }
+        redo.alpha = 0F
+        mOverlay?.lastClick = null
+
+        val detect_start:Button = findViewById(R.id.detect_start)
+        detect_start.isEnabled = true
         createObjectAnalyzer()
+
         mPreview?.release()
         createLensEngine()
         startLensEngine()
@@ -217,7 +289,12 @@ public class LiveScanActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     override fun onClick(v: View?) {
-        mHandler.sendEmptyMessage(START_PREVIEW)
+        when (v?.id) {
+            R.id.redo -> mHandler.sendEmptyMessage(START_PREVIEW)
+            R.id.detect_start -> mHandler.sendEmptyMessage(SAVE_IMAGE)
+        }
+
+
     }
 
     private fun createObjectAnalyzer() {
@@ -246,12 +323,25 @@ public class LiveScanActivity : AppCompatActivity(), View.OnClickListener {
                 }
                 mOverlay?.clear()
                 val objectSparseArray = result.analyseList
-                for (i in 0 until objectSparseArray.size()) {
+                for (block in result.analyseList.valueIterator()) {
+                    val lastClick = mOverlay?.lastClick
+                    try {
+                        if (lastClick != null && block!!.border.contains(lastClick.x, lastClick.y)) {
+                            sum += parseDouble(block!!.stringValue)
+                            total_view.text = "Total: \n $sum"
+                            redo.alpha = 1F
+                            mHandler.sendEmptyMessage(STOP_PREVIEW)
+                        }
+                    } catch (e: Exception) {
+                        mOverlay?.lastClick = null
+                    }
+
                     val graphic = MLTextGraphic(
                         mOverlay,
-                        objectSparseArray.valueAt(i)
+                        block
                     )
                     mOverlay?.add(graphic)
+
                 }
                 // When you need to implement a scene that stops after recognizing specific content
                 // and continues to recognize after finishing processing, refer to this code

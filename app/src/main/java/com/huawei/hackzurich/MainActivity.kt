@@ -1,6 +1,7 @@
 package com.huawei.hackzurich
 
 import android.content.Intent
+import android.database.sqlite.SQLiteDatabase
 import android.graphics.Point
 import android.os.Bundle
 import android.util.SparseArray
@@ -26,98 +27,13 @@ import java.lang.Double.parseDouble
 import java.lang.NumberFormatException
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {
-
-    // TODO: Make analyzer generic
-    private lateinit var textAnalyzer: MLTextAnalyzer
-    private lateinit var lensEngine: LensEngine
-    private lateinit var textView: TextView
-    private var maxBlock: MLText.Block? = null
-
-    private fun setupAnalyzer() {
-        textAnalyzer = MLTextAnalyzer.Factory(applicationContext).create()
-        // TODO: Add callback to constructor
-        var processor = OcrDetectorProcessor()
-        maxBlock = null
-        processor.callback { res -> process(res) }
-        textAnalyzer.setTransactor(processor)
-    }
-
-    private fun setupLens() {
-        lensEngine = LensEngine.Creator(applicationContext, textAnalyzer)
-            .setLensType(LensEngine.BACK_LENS)
-            .applyDisplayDimension(1440, 1080)
-            .applyFps(30.0f)
-            .enableAutomaticFocus(true)
-            .create()
-    }
-
-    private fun showText(res: SparseArray<MLText.Block>): Unit {
-        var result = ""
-        for (value in res.valueIterator()) {
-            try {
-                val lines = value?.contents
-                for (line in lines!!) {
-                    println(line.border)
-                    val words = line.contents
-                    for (word in words) {
-                        result += word.stringValue + " "
-                    }
-                }
-                result += "\n"
-            } catch (e: java.lang.Exception) {
-
-            }
-        }
-    }
-
-    private fun calcMaxBlock(res: SparseArray<MLText.Block?>): Unit {
-        for (block in res.valueIterator()) {
-            if (block == null) continue
-            try {
-                val num = parseDouble(block.stringValue)
-                val border = block.border
-                if (maxBlock == null) {
-                    maxBlock = block
-                } else if (border.height() > maxBlock!!.border.height()) {
-                    maxBlock = block
-                }
-            } catch (e: NumberFormatException) {
-                println("NaN")
-            }
-        }
-        textView.text = maxBlock?.stringValue
-    }
-
-
-    private fun process(res: SparseArray<MLText.Block?>): Unit {
-        for (block in res.valueIterator()) {
-            if (block == null) continue
-            try {
-                val num = parseDouble(block.stringValue)
-                val border = block.border
-                if (maxBlock == null) {
-                    maxBlock = block
-                } else if (border.height() > maxBlock!!.border.height()) {
-                    maxBlock = block
-                }
-            } catch (e: NumberFormatException) {
-                println("NaN")
-            }
-        }
-        textView.text = maxBlock?.stringValue
-    }
-
     private fun setupCheck() {
-        val checkStatusTextView = findViewById<TextView>(R.id.main_check)
-
         lifecycle.coroutineScope.launchWhenCreated {
             try {
                 delay(1000)
                 runHmsConfigurationCheck()
-                checkStatusTextView.text = getString(R.string.checking_setup_result_ok)
             } catch (checkException: Exception) {
-                checkStatusTextView.text =
-                    getString(R.string.checking_setup_result_fail, checkException.message)
+
             }
         }
     }
@@ -134,40 +50,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setupCheck()
+        val dbHelper = DataBaseHelper(this)
+        val db: SQLiteDatabase = dbHelper.writableDatabase
+
         btn_scan.setOnClickListener(this)
-
-        textView = findViewById<TextView>(R.id.textView)
-
-        button.setOnClickListener {
-            button.text = "Hello"
-            setupAnalyzer()
-            setupLens()
-            /*val mSurfaceView: SurfaceView = findViewById(R.id.surfaceView2)
-            try {
-                lensEngine.run(mSurfaceView.holder)
-            } catch (e: IOException) {
-                //println(e)
-                button.text = "Been here"
-                // Exception handling logic.
-            }*/
-        }
-
-        button2.setOnClickListener {
-
-            if (textAnalyzer != null) {
-                try {
-                    textAnalyzer.stop()
-                } catch (e: IOException) {
-                    // Exception handling.
-                }
-            }
-            lensEngine?.release()
-            //val mSurfaceView: SurfaceView = findViewById(R.id.surfaceView2)
-            //var canvas = mSurfaceView.holder.lockCanvas()
-        }
-
-
-
     }
 
     private suspend fun runHmsConfigurationCheck() {
